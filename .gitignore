@@ -1,0 +1,21 @@
+headgym-client/node_modules
+headgym-client/.env.local
+headgym-client/.next
+.DS_Store
+.env.local
+.next
+headgym-api/HeadGym/.idea/.idea.HeadGym/.idea
+headgym-api/HeadGym/Common/Util/.env
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Editor backups
+*.swp
+*.swo
+
+# Logs
+*.log
+
+**.env
