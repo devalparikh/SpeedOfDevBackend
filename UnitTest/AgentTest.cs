@@ -71,7 +71,7 @@ public class AgentTest
         var agentFactory = new AgentFactory(engineerClass);
         var agent = agentFactory.Build();
 
-        var answer = await agent.Agent.RunAsync(Prompt);
+        var answer = await agent.AIAgent.RunAsync(Prompt);
         Console.WriteLine(answer);
         
         Assert.IsNotNull(answer);

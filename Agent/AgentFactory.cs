@@ -45,7 +45,7 @@ public class AgentFactory
     {
         var aiAgent = BuildAIAgent();
         var agent = (BaseAgent)Activator.CreateInstance(_type)!;
-        agent.Agent = aiAgent;
+        agent.AIAgent = aiAgent;
         return agent;
     }
 
