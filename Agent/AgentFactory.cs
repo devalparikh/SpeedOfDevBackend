@@ -7,7 +7,7 @@ using OpenAI.Chat;
 
 namespace Agent;
 
-public class AIAgentFactory
+public class AgentFactory
 {
     private const string MODEL_DEFAULT = MODEL_GPT_4O_MINI;
     private const string MODEL_GPT_4O_MINI = "gpt-4o-mini";
@@ -17,7 +17,7 @@ public class AIAgentFactory
 
     private Type _type = DEFAULT_AGENT_TYPE;
     
-    public AIAgentFactory(Type type)
+    public AgentFactory(Type type)
     {
         _type = type;
         UpdateSystemPrompt();

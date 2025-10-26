@@ -29,7 +29,7 @@ public class AgentTest
         Type engineerClass,
         params string[] extraAnswerAssertions)
     {
-        var agentFactory = new AIAgentFactory(engineerClass);
+        var agentFactory = new AgentFactory(engineerClass);
         var prompt = agentFactory.SystemPrompt;
         
         Console.WriteLine(prompt);
@@ -68,7 +68,7 @@ public class AgentTest
         Type engineerClass,
         params string[] extraAnswerAssertions)
     {
-        var agentFactory = new AIAgentFactory(engineerClass);
+        var agentFactory = new AgentFactory(engineerClass);
         var agent = agentFactory.Build();
 
         var answer = await agent.Agent.RunAsync(Prompt);
