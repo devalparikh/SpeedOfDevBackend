@@ -1,12 +1,13 @@
 using Agent;
 using Common.Util;
+using OpenAI;
 
 namespace UnitTest;
 
 [TestClass]
 public class AgentTest
 {
-    private static string Prompt { get; } = "Create an scalable ML training system design";
+    private static string Prompt { get; } = "Create an scalable ML training system design. what is the cheapest solution out there?";
 
     [TestInitialize]
     public void Setup()
@@ -14,7 +15,7 @@ public class AgentTest
         // TODO: instead of using live env, mock agent methods
         DotEnv.LoadEnv();
     }
-
+    
     [TestMethod]
     [DataRow(typeof(EngineerAgent), "")]
     [DataRow(typeof(EngineerCanvasAgent), "image")]
@@ -28,9 +29,9 @@ public class AgentTest
         Type engineerClass,
         params string[] extraAnswerAssertions)
     {
-        var agent = (BaseAgent)Activator.CreateInstance(engineerClass)!;
-
-        var prompt = agent.SystemPrompt;
+        var agentFactory = new AIAgentFactory(engineerClass);
+        var prompt = agentFactory.SystemPrompt;
+        
         Console.WriteLine(prompt);
 
         Assert.Contains("You are an expert staff engineer", prompt);
@@ -62,18 +63,19 @@ public class AgentTest
     // [DataRow(typeof(EngineerSearchAgent), "")]
     // [DataRow(typeof(EngineerSearchDrawAgent), "")]
     // [DataRow(typeof(EngineerSearchCanvasAgent), "")]
-    [DataRow(typeof(EngineerSearchDrawCanvasAgent), "")]
+    [DataRow(typeof(EngineerSearchDrawCanvasAgent), "mermaid")]
     public async Task AgentResponseTest(
         Type engineerClass,
         params string[] extraAnswerAssertions)
     {
-        var agent = (BaseAgent)Activator.CreateInstance(engineerClass)!;
-        Console.WriteLine(agent.SystemPrompt);
-        // var answer = await agent.Agent.RunAsync(Prompt);
-        // Console.WriteLine(answer);
-        //
-        // Assert.IsNotNull(answer);
-        // AssertAnswerContainsString(answer, extraAnswerAssertions);
+        var agentFactory = new AIAgentFactory(engineerClass);
+        var agent = agentFactory.Build();
+
+        var answer = await agent.Agent.RunAsync(Prompt);
+        Console.WriteLine(answer);
+        
+        Assert.IsNotNull(answer);
+        AssertAnswerContainsString(answer, extraAnswerAssertions);
     }
 
     private static void AssertAnswerContainsString<T>(T answer, string[] expectedAnswers)

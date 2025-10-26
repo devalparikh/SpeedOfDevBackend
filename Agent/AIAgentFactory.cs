@@ -1,3 +1,5 @@
+using System.ClientModel;
+using Azure.AI.OpenAI;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using OpenAI;
@@ -10,28 +12,51 @@ public class AIAgentFactory
     private const string MODEL_DEFAULT = MODEL_GPT_4O_MINI;
     private const string MODEL_GPT_4O_MINI = "gpt-4o-mini";
     private const string MODEL_GPT_4O = "gpt-4o";
+    
+    private static readonly Type DEFAULT_AGENT_TYPE = typeof(EngineerAgent);
 
-    private readonly BaseAgent _agent;
-
-    public AIAgentFactory(BaseAgent agent)
+    private Type _type = DEFAULT_AGENT_TYPE;
+    
+    public AIAgentFactory(Type type)
     {
-        _agent = agent;
+        _type = type;
+        UpdateSystemPrompt();
     }
 
-    private bool UseWebSearch => _agent is IEngineerSearchAgent;
-    private bool UseDrawToCanvas => _agent is IEngineerDrawAgent;
-    private bool UseVisionModality => _agent is IEngineerCanvasAgent;
+    public string SystemPrompt { get; set; } = EngineerAgent.EngineerSystemPrompt;
     
+    private static AzureOpenAIClient AzureOpenAIClient => 
+        new(
+            endpoint: new Uri($"https://{AzureResource}.openai.azure.com"), 
+            credential: ApiKeyCredential);
+    
+    private static string AzureResource => 
+        new(Environment.GetEnvironmentVariable("AZURE_OPENAI_RESOURCE")!);
 
-    public AIAgent Build()
+    private static ApiKeyCredential ApiKeyCredential => 
+        new(Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY")!);
+
+    // Markers using marker interfaces
+    private bool UseWebSearch => typeof(IEngineerSearchAgent).IsAssignableFrom(_type);
+    private bool UseDrawToCanvas => typeof(IEngineerDrawAgent).IsAssignableFrom(_type);
+    private bool UseVisionModality => typeof(IEngineerCanvasAgent).IsAssignableFrom(_type);
+    
+    public BaseAgent Build()
     {
-        UpdateSystemPrompt();
+        var aiAgent = BuildAIAgent();
+        var agent = (BaseAgent)Activator.CreateInstance(_type)!;
+        agent.Agent = aiAgent;
+        return agent;
+    }
+
+    private AIAgent BuildAIAgent()
+    {
         var chatClient = GetChatClient();
         var tools = GetAITools();
-        var className = _agent.GetType().Name;
+        var className = _type.Name;
         return chatClient
             .CreateAIAgent(
-                instructions: _agent.SystemPrompt,
+                instructions: SystemPrompt,
                 name: className,
                 tools: tools);
     }
@@ -39,40 +64,33 @@ public class AIAgentFactory
     private ChatClient GetChatClient()
     {
         var model = MODEL_DEFAULT;
-        var useVision = UseVisionModality;
-        var useWeb = UseWebSearch;
-        if (useVision || useWeb) model = MODEL_GPT_4O;
+        if (UseVisionModality || UseWebSearch) model = MODEL_GPT_4O;
 
-        return _agent.AzureOpenAIClient.GetChatClient(model);
+        return AzureOpenAIClient.GetChatClient(model);
     }
 
     private void UpdateSystemPrompt()
     {
-        string prompt = _agent.SystemPrompt;
-
         if (UseWebSearch)
         {
-            prompt = $"{prompt} {EngineerSearchAgent.SearchSystemPrompt}";
+            SystemPrompt = $"{SystemPrompt} {EngineerSearchAgent.SearchSystemPrompt}";
         }
         
         if (UseDrawToCanvas)
         {
-            prompt = $"{prompt} {EngineerDrawAgent.DrawSystemPrompt}";
+            SystemPrompt = $"{SystemPrompt} {EngineerDrawAgent.DrawSystemPrompt}";
         }
         
         if (UseVisionModality)
         {
-            prompt = $"{prompt} {EngineerCanvasAgent.CanvasSystemPrompt}";
+            SystemPrompt = $"{SystemPrompt} {EngineerCanvasAgent.CanvasSystemPrompt}";
         }
-
-        _agent.SystemPrompt = prompt;
     }
 
     private AITool[] GetAITools()
     {
         var tools = new List<AITool>();
 
-        var useWeb = UseWebSearch;
         if (UseWebSearch) tools.Add(new HostedWebSearchTool());
 
         return tools.ToArray();
