@@ -1,16 +1,6 @@
 namespace Agent;
 
 public class EngineerSearchDrawCanvasAgent
-    : EngineerAgent, IEngineerSearchAgent, IEngineerCanvasAgent
+    : EngineerAgent, IEngineerSearchAgent, IEngineerCanvasAgent, IEngineerDrawAgent
 {
-    public EngineerSearchDrawCanvasAgent()
-    {
-        SystemPrompt =
-            $"{base.SystemPrompt} " +
-            $"{EngineerSearchAgent.SearchSystemPrompt} " +
-            $"{EngineerDrawAgent.DrawSystemPrompt} " +
-            $"{EngineerCanvasAgent.CanvasSystemPrompt}";
-    }
-
-    public override string SystemPrompt { get; }
 }

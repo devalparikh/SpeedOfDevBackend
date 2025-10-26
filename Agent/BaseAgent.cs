@@ -19,20 +19,11 @@ public abstract class BaseAgent : IEngineerAgent
     public AzureOpenAIClient AzureOpenAIClient { get; }
 
     public AIAgent Agent { get; set; }
-
-    public abstract string SystemPrompt { get; }
+    
+    public abstract string SystemPrompt { get; set; }
 
     private string AzureResource { get; } = new(Environment.GetEnvironmentVariable("AZURE_OPENAI_RESOURCE")!);
 
     private ApiKeyCredential ApiKeyCredential { get; } =
         new(Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY")!);
-
-    public virtual bool UseVisionModality { get; } = false;
-
-    public virtual bool UseWebSearch { get; } = false;
-
-    public string GetSystemPrompt()
-    {
-        return SystemPrompt;
-    }
 }
