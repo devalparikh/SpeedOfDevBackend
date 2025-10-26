@@ -1,13 +1,14 @@
 using Agent;
 using Common.Util;
-using OpenAI;
+using Examples;
 
 namespace UnitTest;
 
 [TestClass]
 public class AgentTest
 {
-    private static string Prompt { get; } = "Create an scalable ML training system design. what is the cheapest solution out there?";
+    private static string Prompt { get; } =
+        "Create an scalable ML training system design. what is the cheapest solution out there?";
 
     [TestInitialize]
     public void Setup()
@@ -15,7 +16,7 @@ public class AgentTest
         // TODO: instead of using live env, mock agent methods
         DotEnv.LoadEnv();
     }
-    
+
     [TestMethod]
     [DataRow(typeof(EngineerAgent), "")]
     [DataRow(typeof(EngineerCanvasAgent), "image")]
@@ -25,19 +26,19 @@ public class AgentTest
     [DataRow(typeof(EngineerSearchDrawAgent), "web", "mermaid")]
     [DataRow(typeof(EngineerSearchCanvasAgent), "web", "image")]
     [DataRow(typeof(EngineerSearchDrawCanvasAgent), "web", "mermaid", "image")]
-    public async Task SystemPromptTest(
+    public void SystemPromptTest(
         Type engineerClass,
         params string[] extraAnswerAssertions)
     {
         var agentFactory = new AgentFactory(engineerClass);
         var prompt = agentFactory.SystemPrompt;
-        
+
         Console.WriteLine(prompt);
 
         Assert.Contains("You are an expert staff engineer", prompt);
         AssertAnswerContainsString(prompt, extraAnswerAssertions);
     }
-    
+
     [TestMethod]
     // [DataRow(typeof(EngineerAgent), false)]
     // [DataRow(typeof(EngineerCanvasAgent), false)]
@@ -47,7 +48,7 @@ public class AgentTest
     // [DataRow(typeof(EngineerSearchDrawAgent), true)]
     // [DataRow(typeof(EngineerSearchCanvasAgent), true)]
     [DataRow(typeof(EngineerSearchDrawCanvasAgent), true)]
-    public async Task UseWebTest(
+    public void UseWebTest(
         Type engineerClass,
         bool useWeb)
     {
@@ -73,19 +74,32 @@ public class AgentTest
 
         var answer = await agent.AIAgent.RunAsync(Prompt);
         Console.WriteLine(answer);
-        
+
         Assert.IsNotNull(answer);
         AssertAnswerContainsString(answer, extraAnswerAssertions);
+    }
+
+    // TODO: delete lol
+    [TestMethod]
+    public async Task TestExample()
+    {
+        var prompt =
+            "Create a ML training system that can scale to 10k tps of ingested new data. " +
+            "New models should deliver weekly. " +
+            "Decide between various cloud based services and optimize for cost.";
+        var answer = await ExampleAgent<EngineerSearchDrawAgent>.Run(prompt);
+        Console.WriteLine(answer);
     }
 
     private static void AssertAnswerContainsString<T>(T answer, string[] expectedAnswers)
     {
         if (expectedAnswers.Length == 0) return;
+        if (answer is null) Assert.Fail();
         foreach (var expectedAnswer in expectedAnswers)
         {
             Console.WriteLine(answer);
             Console.WriteLine(expectedAnswer);
-            if (!string.IsNullOrEmpty(expectedAnswer)) Assert.Contains(expectedAnswer, answer.ToString());
+            if (!string.IsNullOrEmpty(expectedAnswer)) Assert.Contains(expectedAnswer, answer!.ToString()!);
         }
     }
 }

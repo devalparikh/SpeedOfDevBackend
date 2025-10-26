@@ -12,11 +12,11 @@ public class AgentFactory
     private const string MODEL_DEFAULT = MODEL_GPT_4O_MINI;
     private const string MODEL_GPT_4O_MINI = "gpt-4o-mini";
     private const string MODEL_GPT_4O = "gpt-4o";
-    
+
     private static readonly Type DEFAULT_AGENT_TYPE = typeof(EngineerAgent);
 
-    private Type _type = DEFAULT_AGENT_TYPE;
-    
+    private readonly Type _type = DEFAULT_AGENT_TYPE;
+
     public AgentFactory(Type type)
     {
         _type = type;
@@ -24,23 +24,24 @@ public class AgentFactory
     }
 
     public string SystemPrompt { get; set; } = EngineerAgent.EngineerSystemPrompt;
-    
-    private static AzureOpenAIClient AzureOpenAIClient => 
+
+    private static AzureOpenAIClient AzureOpenAIClient =>
         new(
-            endpoint: new Uri($"https://{AzureResource}.openai.azure.com"), 
-            credential: ApiKeyCredential);
-    
-    private static string AzureResource => 
+            new Uri($"https://{AzureResource}.openai.azure.com"),
+            ApiKeyCredential);
+
+    private static string AzureResource =>
         new(Environment.GetEnvironmentVariable("AZURE_OPENAI_RESOURCE")!);
 
-    private static ApiKeyCredential ApiKeyCredential => 
+    private static ApiKeyCredential ApiKeyCredential =>
         new(Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY")!);
 
     // Markers using marker interfaces
+    // Instead of using markers can we use class methods
     private bool UseWebSearch => typeof(IEngineerSearchAgent).IsAssignableFrom(_type);
     private bool UseDrawToCanvas => typeof(IEngineerDrawAgent).IsAssignableFrom(_type);
     private bool UseVisionModality => typeof(IEngineerCanvasAgent).IsAssignableFrom(_type);
-    
+
     public BaseAgent Build()
     {
         var aiAgent = BuildAIAgent();
@@ -56,8 +57,8 @@ public class AgentFactory
         var className = _type.Name;
         return chatClient
             .CreateAIAgent(
-                instructions: SystemPrompt,
-                name: className,
+                SystemPrompt,
+                className,
                 tools: tools);
     }
 
@@ -71,20 +72,11 @@ public class AgentFactory
 
     private void UpdateSystemPrompt()
     {
-        if (UseWebSearch)
-        {
-            SystemPrompt = $"{SystemPrompt} {EngineerSearchAgent.SearchSystemPrompt}";
-        }
-        
-        if (UseDrawToCanvas)
-        {
-            SystemPrompt = $"{SystemPrompt} {EngineerDrawAgent.DrawSystemPrompt}";
-        }
-        
-        if (UseVisionModality)
-        {
-            SystemPrompt = $"{SystemPrompt} {EngineerCanvasAgent.CanvasSystemPrompt}";
-        }
+        if (UseWebSearch) SystemPrompt = $"{SystemPrompt} {EngineerSearchAgent.SearchSystemPrompt}";
+
+        if (UseDrawToCanvas) SystemPrompt = $"{SystemPrompt} {EngineerDrawAgent.DrawSystemPrompt}";
+
+        if (UseVisionModality) SystemPrompt = $"{SystemPrompt} {EngineerCanvasAgent.CanvasSystemPrompt}";
     }
 
     private AITool[] GetAITools()
