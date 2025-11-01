@@ -1,4 +1,4 @@
-namespace Agent;
+namespace Agent.Engineer;
 
 public class EngineerAgent : BaseAgent
 {

@@ -1,4 +1,4 @@
-﻿using Agent;
+﻿using Agent.Engineer;
 using Examples;
 
 ExampleAgent<EngineerAgent>
