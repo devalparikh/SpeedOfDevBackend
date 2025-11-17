@@ -14,61 +14,38 @@ public class AgentFactory
     private const string MODEL_GPT_4O_MINI = "gpt-4o-mini";
     private const string MODEL_GPT_4O = "gpt-4o";
 
-    private static readonly Type DEFAULT_AGENT_TYPE = typeof(EngineerAgent);
+    private readonly AgentCapabilities capabilities = AgentCapabilities.None;
 
-    private Type _type = DEFAULT_AGENT_TYPE;
-
-    public string SystemPrompt { get; set; } = EngineerAgent.EngineerSystemPrompt;
-
-    private Type Type
+    public AgentFactory()
     {
-        get => _type;
-        set
-        {
-            _type = value;
-            UpdateSystemPrompt();
-        }
     }
+
+    public AgentFactory(AgentCapabilities capabilities)
+    {
+        this.capabilities = capabilities;
+    }
+
+    private Type Type { get; }
 
     private static AzureOpenAIClient AzureOpenAIClient =>
         new(
             new Uri($"https://{AzureResource}.openai.azure.com"),
             ApiKeyCredential);
+
     private static string AzureResource =>
         new(Environment.GetEnvironmentVariable("AZURE_OPENAI_RESOURCE")!);
+
     private static ApiKeyCredential ApiKeyCredential =>
         new(Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY")!);
-    
-    // Markers using marker interfaces
-    // Instead of using markers can we use class methods
-    private bool UseWebSearch => typeof(IEngineerSearchAgent).IsAssignableFrom(Type);
-    private bool UseDrawToCanvas => typeof(IEngineerDrawAgent).IsAssignableFrom(Type);
-    private bool UseVisionModality => typeof(IEngineerCanvasAgent).IsAssignableFrom(Type);
-    
-    public AgentFactory()
-    {
-    }
-    
-    public AgentFactory(Type type)
-    {
-        Type = type;
-    }
+
+    private bool UseWebSearch => capabilities.HasFlag(AgentCapabilities.Search);
+    private bool UseVisionModality => capabilities.HasFlag(AgentCapabilities.SeeCanvas);
+    public string SystemPrompt => BuildSystemPrompt();
 
     public BaseAgent Build()
     {
         var aiAgent = BuildAIAgent();
-        var agent = (BaseAgent)Activator.CreateInstance(Type)!;
-        agent.AIAgent = aiAgent;
-        return agent;
-    }
-    
-    // Another option for to override type using generics
-    public BaseAgent Build<T>()
-        where T : BaseAgent
-    {
-        Type = typeof(T);
-        var aiAgent = BuildAIAgent();
-        var agent = (BaseAgent)Activator.CreateInstance(Type)!;
+        var agent = new BaseAgent(capabilities);
         agent.AIAgent = aiAgent;
         return agent;
     }
@@ -78,9 +55,10 @@ public class AgentFactory
         var chatClient = GetChatClient();
         var tools = GetAITools();
         var className = Type.Name;
+        var systemPrompt = BuildSystemPrompt();
         return chatClient
             .CreateAIAgent(
-                SystemPrompt,
+                systemPrompt,
                 className,
                 tools: tools);
     }
@@ -93,13 +71,19 @@ public class AgentFactory
         return AzureOpenAIClient.GetChatClient(model);
     }
 
-    private void UpdateSystemPrompt()
+    private string BuildSystemPrompt()
     {
-        if (UseWebSearch) SystemPrompt = $"{SystemPrompt} {EngineerSearchAgent.SearchSystemPrompt}";
+        string systemPrompt = "";
 
-        if (UseDrawToCanvas) SystemPrompt = $"{SystemPrompt} {EngineerDrawAgent.DrawSystemPrompt}";
+        foreach (AgentCapabilities capability in Prompts.CapabilityToPrompt.Keys)
+        {
+            Console.WriteLine(capabilities);
+            if (AgentCapabilities.None.HasFlag(capability)) continue;
+            if (!capabilities.HasFlag(capability)) continue;
+            systemPrompt = $"{systemPrompt} {Prompts.CapabilityToPrompt[capability]}";
+        }
 
-        if (UseVisionModality) SystemPrompt = $"{SystemPrompt} {EngineerCanvasAgent.CanvasSystemPrompt}";
+        return systemPrompt;
     }
 
     private AITool[] GetAITools()

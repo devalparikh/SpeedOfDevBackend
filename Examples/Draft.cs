@@ -1,6 +1,4 @@
 using Agent;
-using Agent.Engineer;
-using Agent.Summarizer;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Workflows;
 using Microsoft.Agents.AI.Workflows.Reflection;
@@ -12,8 +10,8 @@ public class Draft
     public static async void OrchestratorDraft()
     {
         // Create agents
-        var engineerAgent = new AgentFactory().Build<EngineerAgent>();
-        var summarizerAgent = new AgentFactory().Build<SummarizerAgent>();
+        var engineerAgent = new AgentFactory().Build();
+        var summarizerAgent = new AgentFactory(AgentCapabilities.Summarize).Build();
 
         // Pull ai agents
         AIAgent engineerAIAgent = engineerAgent.AIAgent;
