@@ -3,7 +3,6 @@ namespace Agent;
 [Flags]
 public enum AgentCapabilities
 {
-    // TODO: need to split
     None = 0,
     Engineer = 1 << 0,
     SeeCanvas = 1 << 1,
