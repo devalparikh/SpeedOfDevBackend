@@ -19,19 +19,19 @@ public class AgentTest
     }
 
     [TestMethod]
-    [DataRow(typeof(EngineerAgent), "")]
-    [DataRow(typeof(EngineerCanvasAgent), "image")]
-    [DataRow(typeof(EngineerDrawAgent), "mermaid")]
-    [DataRow(typeof(EngineerDrawCanvasAgent), "mermaid", "image")]
-    [DataRow(typeof(EngineerSearchAgent), "web")]
-    [DataRow(typeof(EngineerSearchDrawAgent), "web", "mermaid")]
-    [DataRow(typeof(EngineerSearchCanvasAgent), "web", "image")]
-    [DataRow(typeof(EngineerSearchDrawCanvasAgent), "web", "mermaid", "image")]
+    [DataRow(AgentCapabilities.Engineer, "")]
+    [DataRow(AgentCapabilities.EngineerSee, "image")]
+    [DataRow(AgentCapabilities.EngineerDraw, "mermaid")]
+    [DataRow(AgentCapabilities.EngineerDrawAndSee, "mermaid", "image")]
+    [DataRow(AgentCapabilities.EngineerSearch, "web")]
+    [DataRow(AgentCapabilities.EngineerSearchAndDraw, "web", "mermaid")]
+    [DataRow(AgentCapabilities.EngineerSearchAndSee, "web", "image")]
+    [DataRow(AgentCapabilities.EngineerSearchAndDrawAndSee, "web", "mermaid", "image")]
     public void SystemPromptTest(
-        Type engineerClass,
+        AgentCapabilities agentCapabilities,
         params string[] extraAnswerAssertions)
     {
-        var agentFactory = new AgentFactory(engineerClass);
+        var agentFactory = new AgentFactory(agentCapabilities);
         var prompt = agentFactory.SystemPrompt;
 
         Console.WriteLine(prompt);
@@ -40,37 +40,37 @@ public class AgentTest
         AssertAnswerContainsString(prompt, extraAnswerAssertions);
     }
 
-    [TestMethod]
-    // [DataRow(typeof(EngineerAgent), false)]
-    // [DataRow(typeof(EngineerCanvasAgent), false)]
-    // [DataRow(typeof(EngineerDrawAgent), false)]
-    // [DataRow(typeof(EngineerDrawCanvasAgent), false)]
-    // [DataRow(typeof(EngineerSearchAgent), true)]
-    // [DataRow(typeof(EngineerSearchDrawAgent), true)]
-    // [DataRow(typeof(EngineerSearchCanvasAgent), true)]
-    [DataRow(typeof(EngineerSearchDrawCanvasAgent), true)]
-    public void UseWebTest(
-        Type engineerClass,
-        bool useWeb)
-    {
-        var agent = (BaseAgent)Activator.CreateInstance(engineerClass)!;
-        Assert.IsTrue(agent is IEngineerSearchAgent == useWeb);
-    }
+    // [TestMethod]
+    // // [DataRow(typeof(EngineerAgent), false)]
+    // // [DataRow(typeof(EngineerCanvasAgent), false)]
+    // // [DataRow(typeof(EngineerDrawAgent), false)]
+    // // [DataRow(typeof(EngineerDrawCanvasAgent), false)]
+    // // [DataRow(typeof(EngineerSearchAgent), true)]
+    // // [DataRow(typeof(EngineerSearchDrawAgent), true)]
+    // // [DataRow(typeof(EngineerSearchCanvasAgent), true)]
+    // [DataRow(AgentCapabilities.EngineerSearchAndDrawAndSee, true)]
+    // public void UseWebTest(
+    //     AgentCapabilities agentCapabilities,
+    //     bool useWeb)
+    // {
+    //     var agent = (BaseAgent)Activator.CreateInstance(engineerClass)!;
+    //     Assert.IsTrue(agent is IEngineerSearchAgent == useWeb);
+    // }
 
     [TestMethod]
-    // [DataRow(typeof(EngineerAgent), "")]
-    // [DataRow(typeof(EngineerCanvasAgent), "")]
-    // [DataRow(typeof(EngineerDrawAgent), "")]
-    // [DataRow(typeof(EngineerDrawCanvasAgent), "")]
-    // [DataRow(typeof(EngineerSearchAgent), "")]
-    // [DataRow(typeof(EngineerSearchDrawAgent), "")]
-    // [DataRow(typeof(EngineerSearchCanvasAgent), "")]
-    [DataRow(typeof(EngineerSearchDrawCanvasAgent), "mermaid")]
+    // [DataRow(AgentCapabilities.Engineer, "")]
+    // [DataRow(AgentCapabilities.EngineerSee, "")]
+    // [DataRow(AgentCapabilities.EngineerDraw, "")]
+    // [DataRow(AgentCapabilities.EngineerDrawAndSee, "")]
+    // [DataRow(AgentCapabilities.EngineerSearch, "")]
+    // [DataRow(AgentCapabilities.EngineerSearchAndDraw, "")]
+    // [DataRow(AgentCapabilities.EngineerSearchAndSee, "")]
+    [DataRow(AgentCapabilities.EngineerSearchAndDrawAndSee, "mermaid")]
     public async Task AgentResponseTest(
-        Type engineerClass,
+        AgentCapabilities agentCapabilities,
         params string[] extraAnswerAssertions)
     {
-        var agentFactory = new AgentFactory(engineerClass);
+        var agentFactory = new AgentFactory(agentCapabilities);
         var agent = agentFactory.Build();
 
         var answer = await agent.AIAgent.RunAsync(Prompt);
@@ -78,18 +78,6 @@ public class AgentTest
 
         Assert.IsNotNull(answer);
         AssertAnswerContainsString(answer, extraAnswerAssertions);
-    }
-
-    // TODO: delete lol
-    [TestMethod]
-    public async Task TestExample()
-    {
-        var prompt =
-            "Create a ML training system that can scale to 10k tps of ingested new data. " +
-            "New models should deliver weekly. " +
-            "Decide between various cloud based services and optimize for cost.";
-        var answer = await ExampleAgent<EngineerSearchDrawAgent>.Run(prompt);
-        Console.WriteLine(answer);
     }
 
     private static void AssertAnswerContainsString<T>(T answer, string[] expectedAnswers)
